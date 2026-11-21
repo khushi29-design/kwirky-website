@@ -13,7 +13,7 @@
             "serverReadyAction": {
                 "pattern": "Local:\\s+(https?://\\S+)",
                 "uriFormat": "%s",
-                "action": "debugWithChrome"
+                "action": "openExternally"
             }
         },
         {

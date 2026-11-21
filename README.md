@@ -3,9 +3,14 @@
 Next.js 15, TypeScript, Three.js and GSAP.
 
 ## Run it
-    npm install
-    npm run dev        # http://localhost:3000
+    npm run dev        # http://localhost:3000 (installs packages automatically on first run)
     npm run build && npm start   # production
+
+### In VS Code
+Open this folder (or its parent `kwirky-website`). The "Kwirky: dev server" task starts automatically.
+The first time, VS Code asks whether to allow automatic tasks: choose **Allow**. If you missed it, run
+*Tasks: Manage Automatic Tasks* from the Command Palette (Ctrl+Shift+P) and pick **Allow Automatic Tasks**.
+You can also press **F5** to start the server and open the site in your browser.
 
 ## Replace placeholders
 | What | Where |
@@ -31,4 +36,14 @@ With the site running on port 3000 and Playwright available:
     NODE_PATH="$(npm root -g)" npm run qa
 
 ## GitHub Pages
-Pushing to `main` runs `.github/workflows/pages.yml`, which builds a static export (`GITHUB_PAGES=true`) served at `https://<user>.github.io/<repo>/`. In the repo's Settings > Pages, set Source to "GitHub Actions" once. The cart, checkout and forms still work there because they run in the browser.
+1. Create an empty repository on GitHub (no README), e.g. `kwirky-website`.
+2. From this folder:
+
+       git remote add origin https://github.com/<user>/<repo>.git
+       git push -u origin main
+
+3. In the repository go to **Settings > Pages** and set **Source** to **GitHub Actions** (one time).
+
+Every push to `main` then runs `.github/workflows/pages.yml`, which builds a static export and publishes it at
+`https://<user>.github.io/<repo>/`. The repository name is picked up automatically, so links and images work under that path.
+The cart, checkout and forms still work there because they run in the browser.

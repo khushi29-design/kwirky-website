@@ -1,0 +1,22 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Kwirky: dev server",
+            "type": "npm",
+            "script": "dev",
+            "isBackground": true,
+            "runOptions": { "runOn": "folderOpen" },
+            "presentation": { "reveal": "silent", "panel": "dedicated" },
+            "problemMatcher": {
+                "owner": "next",
+                "pattern": { "regexp": "^x^" },
+                "background": {
+                    "activelyMatching": true,
+                    "beginsPattern": "ensure-deps|next dev",
+                    "endsPattern": "Ready in"
+                }
+            }
+        }
+    ]
+}
