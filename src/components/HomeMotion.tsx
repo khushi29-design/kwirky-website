@@ -7,6 +7,15 @@ import { fontsReady } from "@/lib/three/can";
 import { canSupport3D, KwirkyScene, type CanState } from "@/lib/three/scene";
 
 gsap.registerPlugin(ScrollTrigger);
+// Phones show/hide the address bar while scrolling; don't recalculate every animation when that happens.
+ScrollTrigger.config({ ignoreMobileResize: true });
+
+/** Scale that makes the can (about 2.64 units tall, camera fov 30 at z 9) roughly `px` pixels tall on screen. */
+const canScaleFor = (px: number) => {
+  const w = window.innerWidth, h = window.innerHeight;
+  const fit = Math.min(1, w / h / 0.62);
+  return px / (0.5474 * fit * h);
+};
 
 type Stop = { y: number; s: CanState };
 const K = (x: number, y: number, s: number, rx: number, rz: number, fx: number, liquid = 0): CanState => ({ x, y, s, rx, rz, fx, liquid });
@@ -21,7 +30,8 @@ export function HomeMotion() {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const has3D = canSupport3D();
     if (!has3D) root.classList.add("no3d");
-    const mobile = window.matchMedia("(max-width: 899px)").matches;
+    const mq = window.matchMedia("(max-width: 899px)");
+    let mobile = mq.matches;
     let scene: KwirkyScene | null = null;
     let stops: Stop[] = [];
     let disposed = false;
@@ -32,13 +42,32 @@ export function HomeMotion() {
 
     const measure = () => {
       if (mobile) {
+        const vh = window.innerHeight;
         const a = K(0.4, -0.5, 0.5, 0.1, 0.24, 0.45);
+        // Products: centre the can in the empty band between each panel's title and its details.
+        const left = el(".show-panel .show-left"), right = el(".show-panel .show-right");
+        let show = K(0, 0, 0.5, 0.06, 0, 0.25);
+        if (left && right) {
+          const from = left.offsetTop + left.offsetHeight, to = right.offsetTop;
+          if (to - from > 120) show = K(0, 1 - (from + to) / vh, Math.min(0.75, canScaleFor((to - from) * 0.86)), 0.06, 0, 0.25);
+          else show = K(0, -0.14, canScaleFor(vh * 0.5), 0.06, 0, 0.25); // phone on its side: columns, can in the middle
+        }
+        const story = K(0.42, 0.06, Math.min(0.6, canScaleFor(vh * 0.34)), 0.08, 0.16, 0.45);
         stops = [
           { y: 0, s: K(0, 0.14, 0.7, 0.05, -0.12, 1, 0.8) },
           { y: end("#hero-wrap"), s: a },
-          { y: top("#difference") - window.innerHeight * 0.75, s: a },
-          { y: top("#difference") - window.innerHeight * 0.15, s: K(0.4, -2.4, 0.5, 0.1, 0.24, 0) },
+          { y: top("#difference") - vh * 0.75, s: a },
+          { y: top("#difference") - vh * 0.15, s: K(0.4, -2.4, 0.5, 0.1, 0.24, 0) },
+          { y: top("#products") - vh * 0.6, s: { ...show, y: -2.4, fx: 0 } },
+          { y: top("#products"), s: show },
+          { y: end("#products"), s: show },
+          { y: top("#quiz"), s: { ...show, y: 2.4, rx: 0.3, fx: 0 } },
+          { y: top("#story") - vh, s: { ...story, y: -2.4, fx: 0 } },
+          { y: top("#story"), s: story },
+          { y: end("#story"), s: story },
+          { y: top("#love"), s: { ...story, y: 2.4, rx: 0.3, fx: 0 } },
         ];
+        stops.sort((p, q) => p.y - q.y);
       } else {
         const intro = K(0.52, -0.02, 1.22, 0.12, 0.22, 0.45);
         const diff = K(-0.56, 0, 1.02, -0.05, -0.18, 0.45);
@@ -117,8 +146,8 @@ export function HomeMotion() {
         });
       }
 
-      // Products: horizontal travel on desktop, the can stays centre stage.
-      if (!mobile && !reduced) {
+      // Products: horizontal travel on every screen size, the can stays centre stage.
+      if (!reduced) {
         const track = el(".show-track");
         if (track) {
           gsap.to(track, {
@@ -140,8 +169,13 @@ export function HomeMotion() {
       }
     });
 
+    // Only re-measure when the width changes (rotation, window resize), not when a phone's address bar moves.
+    let lastWidth = window.innerWidth;
     const onResize = () => {
       scene?.resize();
+      if (window.innerWidth === lastWidth) { apply(); return; }
+      lastWidth = window.innerWidth;
+      mobile = mq.matches;
       ScrollTrigger.refresh();
     };
     const onScroll = () => apply();

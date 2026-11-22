@@ -29,6 +29,16 @@ export function SmoothScroll() {
       delete (window as unknown as { __lenis?: Lenis }).__lenis;
     };
   }, []);
+  // Touch screens have no hover, so cards and gallery tiles play their hover animation while centred on screen.
+  useEffect(() => {
+    if (!window.matchMedia("(hover: none)").matches || !("IntersectionObserver" in window)) return;
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => e.target.classList.toggle("is-active", e.isIntersecting)),
+      { rootMargin: "-30% 0px -30% 0px" },
+    );
+    const t = setTimeout(() => document.querySelectorAll(".tile, .product-card").forEach((n) => io.observe(n)), 300);
+    return () => { clearTimeout(t); io.disconnect(); };
+  }, [pathname]);
   useEffect(() => {
     if (!window.location.hash) {
       const l = (window as unknown as { __lenis?: Lenis }).__lenis;
